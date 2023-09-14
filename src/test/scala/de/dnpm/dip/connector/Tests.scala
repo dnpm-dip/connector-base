@@ -15,10 +15,6 @@ import play.api.libs.json.{
   JsObject,
   Writes
 }
-import cats.effect.{
-  IO,
-  LiftIO
-}
 
 
 final case class TestRequest(
@@ -41,14 +37,7 @@ object TestRequest
 class Tests extends AsyncFlatSpec
 {
 
-  import cats.effect.unsafe.implicits.global
-
-  implicit val futureLiftIO: LiftIO[Future] = new LiftIO[Future] {
-
-    override def liftIO[A](ioa: IO[A]): Future[A] = {
-      ioa.unsafeToFuture()
-    }
-  }
+  import BrokerConnectorF.Implicits._
 
 
   private val connector =

@@ -49,6 +49,20 @@ import cats.effect.{
 object BrokerConnectorF
 {
 
+  object Implicits
+  {
+
+    import cats.effect.unsafe.implicits.global
+
+    implicit val futureLiftIO: LiftIO[Future] = new LiftIO[Future] {
+      override def liftIO[A](ioa: IO[A]): Future[A] = {
+        ioa.unsafeToFuture()
+      }
+    }
+
+  }
+
+
   implicit lazy val system: ActorSystem =
     ActorSystem()
 
@@ -107,10 +121,7 @@ with Logging
   import java.util.concurrent.atomic.AtomicReference
 
 
-//  import ExecutionContext.Implicits.global
-
-  implicit val ec: ExecutionContext =
-    scala.concurrent.ExecutionContext.global
+  import ExecutionContext.Implicits.global
 
 
   private def getBrokerConfig: Unit = {
