@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ConnectorConfig>
+
+  <Site id="UKx" name="Musterlingen"/>
+
+  <Peer id ="BSP" name="Beispielhausen" baseUrl="http://localhost:80/Beispielhausen"/>
+  
+  <!-- OPTIONAL request timeout (in seconds) -->
+  <Timeout seconds="10"/>
+  
+</ConnectorConfig>

@@ -1,4 +1,4 @@
-package de.dnpm.dip.connector
+package de.dnpm.dip.connector.broker
 
 
 
@@ -60,27 +60,27 @@ object LocalConfig extends Logging
 /*
   XML Config structure:
 
-<?xml version="1.0" encoding="UTF-8"?>
-<ConnectorConfig>
+  <?xml version="1.0" encoding="UTF-8"?>
+    <ConnectorConfig>
 
-  <!--
-  Local Site ID as also defined in central config,
-  and also site name as fallback when central config not available
-  -->
-  <Site id="..." name="..."/>
+      <!--
+      Local Site ID as also defined in central config,
+      and also site name as fallback when central config not available
+      -->
+      <Site id="..." name="..."/>
+      
+      <!-- Base URL to DNPM-Proxy -->
+      <Broker baseURL="http://localhost"/>
+      
+      <Timeout seconds="10"/>
+      
+      <!-- OPTIONAL, for periodic auto-update of site list from broker: Period (in seconds) -->
+      <!--
+      <UpdatePeriod minutes="30"/>
+      -->
 
-  <!-- Base URL to DNPM-Proxy -->
-  <Broker baseURL="http://localhost"/>
-
-  <Timeout seconds="10"/>
-
-  <!-- OPTIONAL, for periodic auto-update of site list from broker: Period (in seconds) -->
-  <!--
-  <UpdatePeriod minutes="30"/>
-  -->
-
-</ConnectorConfig>
-  */
+    </ConnectorConfig>
+*/
 
   private def parseXMLConfig(in: InputStream): Impl = {
 
@@ -117,11 +117,6 @@ object LocalConfig extends Logging
           .map(new FileInputStream(_))
     }
     .flatMap(Using(_)(parseXMLConfig))
-  .recoverWith {
-    case t =>
-      t.printStackTrace
-      Failure(t)
-  }
     // else use system properties for siteId and baseUrl to instantiate Config
     .recoverWith {
       case t => 

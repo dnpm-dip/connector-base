@@ -1,4 +1,4 @@
-package de.dnpm.dip.connector
+package de.dnpm.dip.connector.broker
 
 
 import java.net.URI
@@ -8,6 +8,7 @@ import play.api.libs.json.{
 }
 import de.dnpm.dip.coding.Coding
 import de.dnpm.dip.model.Site
+
 
 
 final case class SiteEntry

@@ -1,4 +1,4 @@
-package de.dnpm.dip.connector
+package de.dnpm.dip.connector.fake
 
 
 import java.net.URL
@@ -40,8 +40,8 @@ private class FakeConnector[F[_]] extends Connector[
 
   override def localSite: Coding[Site] =
     Coding[Site](
-      "UKX",
-      "Fake Site"
+      "UKx",
+      "Musterhausen"
     )
 
   override def otherSites: List[Coding[Site]] =

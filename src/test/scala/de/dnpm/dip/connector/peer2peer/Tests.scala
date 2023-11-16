@@ -1,9 +1,10 @@
-package de.dnpm.dip.connector
+package de.dnpm.dip.connector.peer2peer
 
 
 import scala.concurrent.Future
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers._
+import org.scalatest.OptionValues._
 import de.dnpm.dip.coding.Coding
 import de.dnpm.dip.model.Site
 import de.dnpm.dip.service.query.{
@@ -15,6 +16,8 @@ import play.api.libs.json.{
   JsObject,
   Writes
 }
+import de.dnpm.dip.connector.HttpMethod._
+
 
 
 final case class TestRequest(
@@ -37,29 +40,18 @@ object TestRequest
 class Tests extends AsyncFlatSpec
 {
 
-  import BrokerConnectorF.Implicits._
-
-
   private val connector =
-    BrokerConnector(
+    PeerToPeerConnector(
       "/api/peer-to-peer/dummy-use-case",
       {
-        case _: TestRequest => HttpMethod.POST -> "test" 
-      }
-    )
-
-  private val connectorF =
-    BrokerConnectorF[Future](
-      "/api/peer-to-peer/dummy-use-case",
-      {
-        case _: TestRequest => HttpMethod.POST -> "test" 
+        case _: TestRequest => POST -> "test" 
       }
     )
 
 
   "OtherSites list" must "be empty" in {
 
-    connectorF.otherSites must be (empty)
+    connector.otherSites.headOption must be (defined)
 
   }
 
@@ -67,12 +59,14 @@ class Tests extends AsyncFlatSpec
   "TestQuery" must "have returned empty Map" in {
 
     val result = 
-      connectorF ! TestRequest(
+      connector ! TestRequest(
         connector.localSite,
         Querier("Dummy-ID")
       )
 
-    result.map(_ must be (empty))
+    result.map(
+      _.headOption.value._2.isLeft mustBe true
+    )
 
   }
 

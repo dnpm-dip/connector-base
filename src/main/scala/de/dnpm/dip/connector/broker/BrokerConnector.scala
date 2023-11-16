@@ -1,4 +1,4 @@
-package de.dnpm.dip.connector
+package de.dnpm.dip.connector.broker
 
 
 import java.net.URL
@@ -38,30 +38,12 @@ import de.dnpm.dip.service.query.{
   PeerToPeerQuery,
   PatientRecordRequest
 }
-import HttpMethod._
+import de.dnpm.dip.connector.HttpMethod._
 import cats.Monad
-import cats.effect.{
-  IO,
-  LiftIO,
-}
 
 
-object BrokerConnectorF
+object BrokerConnector
 {
-
-  object Implicits
-  {
-
-    import cats.effect.unsafe.implicits.global
-
-    implicit val futureLiftIO: LiftIO[Future] = new LiftIO[Future] {
-      override def liftIO[A](ioa: IO[A]): Future[A] = {
-        ioa.unsafeToFuture()
-      }
-    }
-
-  }
-
 
   implicit lazy val system: ActorSystem =
     ActorSystem()
@@ -82,29 +64,37 @@ object BrokerConnectorF
     case req: PatientRecordRequest[_] => POST -> "patient-record"
   }
 
-  def apply[F[_]: LiftIO](
+  def apply(
     apiBaseUri: String,
     uriMethods: PartialFunction[PeerToPeerRequest,(HttpMethod,String)]
-  ): BrokerConnectorF[F] =
-    new BrokerConnectorF[F](
+  ): BrokerConnector =
+    new BrokerConnector(
       apiBaseUri,
       uriMethods orElse defaultUriMethods,
       wsclient,
       config
     )
 
+  def apply(
+    apiBaseUri: String
+  ): BrokerConnector =
+    BrokerConnector(
+      apiBaseUri,
+      PartialFunction.empty
+    )
+
 }
 
 
-class BrokerConnectorF[F[_]: LiftIO] private (
+class BrokerConnector private (
   private val apiBaseUri: String,
-  private val uriMethod: PartialFunction[PeerToPeerRequest,(HttpMethod,String)],
+  private val uriMethods: PartialFunction[PeerToPeerRequest,(HttpMethod,String)],
   private val wsclient: StandaloneWSClient,
   private val localConfig: LocalConfig
 )
 extends Connector[
-  F,
-  Monad[F]
+  Future,
+  Monad[Future]
 ]
 with Logging
 {
@@ -262,37 +252,33 @@ with Logging
     sites: List[Coding[Site]] = this.otherSites
   )(
     implicit 
-    env: Monad[F],
+    env: Monad[Future],
     fr: Reads[req.ResultType] 
-  ): F[Map[Coding[Site],Either[String,req.ResultType]]] = {
+  ): Future[Map[Coding[Site],Either[String,req.ResultType]]] = {
 
     import cats.syntax.either._
 
-    val (uri,method) = uriMethod(req)
+    val (method,uri) = uriMethods(req)
 
-    IO.fromFuture(
-      IO(
-        scatterGather(
-          apiBaseUri + uri,
-          sites,
-          {
-            case (site,request) =>
-              request
-                .withBody(Json.toJson(req))
-                .execute(method.toString)
-                .map(_.body[JsValue].as[req.ResultType])
-                .map(_.asRight[String])
-                .recover {
-                  case t => 
-                    s"Error in peer-to-peer response from site ${site.display.get}: ${t.getMessage}".asLeft[req.ResultType]
-                }
-                .map(site -> _)
-          }        
-        )
-      )
+    scatterGather(
+      apiBaseUri + uri,
+      sites,
+      {
+        case (site,request) =>
+          request
+            .withBody(Json.toJson(req))
+            .execute(method.toString)
+            .map(_.body[JsValue].as[req.ResultType])
+            .map(_.asRight[String])
+            .recover {
+              case t => 
+                s"Error in peer-to-peer response from site ${site.display.get}: ${t.getMessage}".asLeft[req.ResultType]
+            }
+            .map(site -> _)
+      }        
     )
-    .to[F]
 
   }
 
 }
+
