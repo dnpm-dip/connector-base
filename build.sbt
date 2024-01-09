@@ -17,8 +17,10 @@ lazy val root = project.in(file("."))
     libraryDependencies ++= Seq(
     "org.scalatest"          %% "scalatest"               % "3.2.17" % Test,
     "de.dnpm.dip"            %% "service-base"            % "1.0-SNAPSHOT",
-    "com.typesafe.play"      %% "play-ahc-ws-standalone"  % "2.1.3",
-    "com.typesafe.play"      %% "play-ws-standalone-json" % "2.1.3",
+//    "com.typesafe.play"      %% "play-ahc-ws-standalone"  % "2.1.3",
+//    "com.typesafe.play"      %% "play-ws-standalone-json" % "2.1.3",
+    "com.typesafe.play"      %% "play-ahc-ws-standalone"  % "2.2.5",
+    "com.typesafe.play"      %% "play-ws-standalone-json" % "2.2.5",
     "org.scala-lang.modules" %% "scala-xml"               % "2.2.0",
     "org.typelevel"          %% "cats-effect"             % "3.5.1"
    )
