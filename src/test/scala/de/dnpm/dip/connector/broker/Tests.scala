@@ -39,9 +39,6 @@ object TestRequest
 class Tests extends AsyncFlatSpec
 {
 
-  import BrokerConnectorF.Implicits._
-
-
   private val connector =
     BrokerConnector(
       "/api/peer-to-peer/dummy-use-case",
@@ -50,18 +47,9 @@ class Tests extends AsyncFlatSpec
       }
     )
 
-  private val connectorF =
-    BrokerConnectorF[Future](
-      "/api/peer-to-peer/dummy-use-case",
-      {
-        case _: TestRequest => POST -> "test" 
-      }
-    )
-
-
   "OtherSites list" must "be empty" in {
 
-    connectorF.otherSites must be (empty)
+    connector.otherSites must be (empty)
 
   }
 
@@ -69,7 +57,7 @@ class Tests extends AsyncFlatSpec
   "TestQuery" must "have returned empty Map" in {
 
     val result = 
-      connectorF ! TestRequest(
+      connector ! TestRequest(
         connector.localSite,
         Querier("Dummy-ID")
       )

@@ -40,6 +40,7 @@ import de.dnpm.dip.service.query.{
 }
 import de.dnpm.dip.connector.HttpMethod._
 import cats.Monad
+/*
 import cats.effect.{
   IO,
   LiftIO,
@@ -296,3 +297,4 @@ with Logging
   }
 
 }
+*/

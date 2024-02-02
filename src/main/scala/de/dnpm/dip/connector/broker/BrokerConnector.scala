@@ -176,7 +176,7 @@ with Logging
   override def otherSites: List[Coding[Site]] =
     sitesConfig.get match {
       case map if (map.nonEmpty) =>
-        map.collectFirst {
+        map.collect {
           case (site,_) if (site.code.value != localConfig.siteId) => site
         }
         .toList
