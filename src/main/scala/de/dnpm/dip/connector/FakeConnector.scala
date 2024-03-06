@@ -44,13 +44,13 @@ private class FakeConnector[F[_]] extends Connector[
       "Musterhausen"
     )
 
-  override def otherSites: List[Coding[Site]] =
-    List.empty
+  override def otherSites: Set[Coding[Site]] =
+    Set.empty
 
   
   override def submit[T <: PeerToPeerRequest: Writes](
     req: T,
-    sites: List[Coding[Site]] = this.otherSites
+    sites: Set[Coding[Site]] = this.otherSites
   )(
     implicit 
     env: Monad[F],

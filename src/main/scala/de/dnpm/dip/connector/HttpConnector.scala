@@ -55,32 +55,27 @@ with Logging
   ): WSRequest
 
 
-  private def scatter(
-    uri: String,
-    sites: List[Coding[Site]]
-  ): List[(Coding[Site],WSRequest)] =
-    for {
-      site <- sites
-    } yield site -> request(site,uri)
-
-
-  private def gather[T](
-    responses: List[Future[(Coding[Site],T)]],
-  ): Future[Map[Coding[Site],T]] =
-    Future.foldLeft(responses)(Map.empty[Coding[Site],T])(_ + _)
-
-
   private def scatterGather[T](
     uri: String,
-    sites: List[Coding[Site]],
-    trf: (Coding[Site],WSRequest) => Future[(Coding[Site],T)]
+    sites: Set[Coding[Site]],
+    f: (Coding[Site],WSRequest) => Future[(Coding[Site],T)]
   ): Future[Map[Coding[Site],T]] =
-    scatter(uri,sites) pipe (_.map(trf.tupled)) pipe (gather(_))
+    Future.foldLeft(
+      for {
+        site <- sites
+        req  =  request(site,uri)
+        resp =  f(site,req)
+      } yield resp
+    )(
+      Map.empty[Coding[Site],T]
+    )(
+      _ + _
+    )
 
 
   override def submit[T <: PeerToPeerRequest: Writes](
     req: T,
-    sites: List[Coding[Site]] = this.otherSites
+    sites: Set[Coding[Site]] = this.otherSites
   )(
     implicit
     env: Monad[Future],
@@ -89,7 +84,6 @@ with Logging
 
     import cats.syntax.either._
 
-//    val (method,uri,queryParams,writeJsBody) =
     val (method,uri,queryParams) =
       requestMapper(req)
 
@@ -116,22 +110,6 @@ with Logging
                   )
               }
             )
-/*          
-            .pipe(
-              r => writeJsBody match { 
-                case true   => r.withBody(Json.toJson(req))
-                case false  => r
-              }
-            )
-            .pipe(
-              _.addQueryStringParameters(
-                queryParams
-                  .map { case (name,values) => values.map(name -> _) }
-                  .flatten
-                  .toSeq: _*
-              )
-            )
-*/          
             .execute(method.toString)
             .map(_.body[JsValue].as[req.ResultType])
             .map(_.asRight[String])
@@ -158,7 +136,6 @@ object HttpConnector
     PartialFunction[
       PeerToPeerRequest,
       (HttpMethod.Value,String,Map[String,Seq[String]])
-//      (HttpMethod.Value,String,Map[String,Seq[String]],Boolean)
     ] 
 
 

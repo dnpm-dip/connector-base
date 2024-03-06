@@ -2,9 +2,9 @@
 <ConnectorConfig>
 
   <Site id="UKx" name="Musterlingen"/>
-
+  <!--
   <Peer id ="BSP" name="Beispielhausen" baseUrl="http://localhost:80/Beispielhausen"/>
-  
+  -->
   <!-- OPTIONAL request timeout (in seconds) -->
   <Timeout seconds="10"/>
   

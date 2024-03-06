@@ -53,7 +53,7 @@ private object BrokerConnector
 
   final case class SiteConfig
   (
-    sites: List[SiteEntry]
+    sites: Set[SiteEntry]
   )
 
   object SiteConfig
@@ -266,17 +266,17 @@ extends HttpConnector(
     }
 
 
-  override def otherSites: List[Coding[Site]] =
+  override def otherSites: Set[Coding[Site]] =
     sitesConfig.get match {
       case map if (map.nonEmpty) =>
         map.collect {
           case (site,_) if (site.code.value != localConfig.siteId) => site
         }
-        .toList
+        .toSet
 
       case _ =>
         log.warn("Global site config from broker not available, falling back to empty external site list")
-        List.empty[Coding[Site]]
+        Set.empty[Coding[Site]]
     }
 
 

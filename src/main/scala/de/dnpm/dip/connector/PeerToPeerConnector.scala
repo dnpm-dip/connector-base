@@ -165,8 +165,8 @@ extends HttpConnector(baseUri,requestMapper,wsclient)
   override val localSite: Coding[Site] =
     config.localSite
     
-  override val otherSites: List[Coding[Site]] =
-    config.peers.keys.toList
+  override val otherSites: Set[Coding[Site]] =
+    config.peers.keySet
 
   override def request(
     site: Coding[Site],
