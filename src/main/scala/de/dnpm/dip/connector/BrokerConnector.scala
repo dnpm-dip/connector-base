@@ -75,12 +75,13 @@ private object BrokerConnector
   )
   {
     def baseURL =
-      new URL(
+      URI.create(
         if (url endsWith "/")
           url.substring(0,url.length-1)
         else
           s"$url"
       )
+      .toURL
   }
 
   private object LocalConfig extends Logging
