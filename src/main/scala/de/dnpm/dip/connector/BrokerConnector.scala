@@ -67,12 +67,12 @@ private object BrokerConnector
 
   case class LocalConfig
   (
-    siteId: String,
-    siteName: String,
+    localSite: Coding[Site],
     private val url: String,
     timeout: Option[Int],
     updatePeriod: Option[Long]
   )
+  extends HttpConnector.Config
   {
     def baseURL =
       URI.create(
@@ -88,36 +88,42 @@ private object BrokerConnector
   {
 
     /*
-    XML Config structure:
-    
-    <?xml version="1.0" encoding="UTF-8"?>
-      <ConnectorConfig>
-    
-        <!--
-        Local Site ID as also defined in central config,
-        and also site name as fallback when central config not available
-        -->
-        <Site id="..." name="..."/>
-        
-        <!-- Base URL to DNPM-Proxy -->
-        <Broker baseURL="http://localhost"/>
-        
-        <Timeout seconds="10"/>
-        
-        <!-- OPTIONAL, for periodic auto-update of site list from broker: Period (in seconds) -->
-        <!--
-        <UpdatePeriod minutes="30"/>
-        -->
-    
-      </ConnectorConfig>
-    */
+     * Expected XML Config structure:
+     * 
+     *  <?xml version="1.0" encoding="UTF-8"?>
+     *  <Config>
+     *    ...
+     *    <Connector>
+     *    
+     *      <!--
+     *      Local Site ID as also defined in central config,
+     *      and also site name as fallback when central config not available
+     *      -->
+     *      <Site id="..." name="..."/>
+     *      
+     *      <!-- Base URL to DNPM-Proxy -->
+     *      <Broker baseURL="http://localhost"/>
+     *      
+     *      <!-- OPTIONAL request timeout (in seconds) -->
+     *      <Timeout seconds="10"/>
+     *      
+     *      <!-- OPTIONAL, for periodic auto-update of site list from broker: Period (in seconds) -->
+     *      <UpdatePeriod minutes="30"/>
+     *    
+     *    </Connector>
+     *    ...
+     *  </Config>
+     */
+
     private def parseXMLConfig(in: InputStream): LocalConfig = {
     
       val xml = XML.load(in)
     
       LocalConfig(
-        (xml \ "Site" \@ "id"),
-        (xml \ "Site" \@ "name"),
+        Coding[Site](
+          (xml \ "Site" \@ "id"),
+          (xml \ "Site" \@ "name"),
+        ),
         (xml \ "Broker" \@ "baseURL"),
         Try(xml \ "Timeout" \@ "seconds").map(_.toInt).toOption,
         Try(xml \ "UpdatePeriod" \@ "minutes").map(_.toLong).toOption
@@ -128,7 +134,7 @@ private object BrokerConnector
     lazy val instance: LocalConfig =
       // Try reading config from classpath by default
       Try {
-        val file = "brokerConnectorConfig.xml"
+        val file = "connectorConfig.xml"
     
         log.debug(s"Loading connector config file '$file' from classpath...")
     
@@ -137,7 +143,7 @@ private object BrokerConnector
       // else use system property for configFile path
       .recoverWith {
         case t =>
-          val sysProp = "dnpm.dip.broker.connector.configFile"
+          val sysProp = "dnpm.dip.connector.configFile"
     
           log.debug(s"Couldn't get config file from classpath, trying file configured via system property '$sysProp'")
     
@@ -150,14 +156,16 @@ private object BrokerConnector
         case t => 
           Try {
             for {
-              siteId    <- Option(System.getProperty("dnpm.dip.broker.connector.config.siteId"))
-              siteName  <- Option(System.getProperty("dnpm.dip.broker.connector.config.siteName"))
-              baseUrl   <- Option(System.getProperty("dnpm.dip.broker.connector.config.baseUrl"))
-              timeout   =  Option(System.getProperty("dnpm.dip.broker.connector.config.timeout.seconds")).map(_.toInt)
-              period    =  Option(System.getProperty("dnpm.dip.broker.connector.config.update.period")).map(_.toLong)
+              siteId    <- Option(System.getProperty("dnpm.dip.connector.config.siteId"))
+              siteName  <- Option(System.getProperty("dnpm.dip.connector.config.siteName"))
+              baseUrl   <- Option(System.getProperty("dnpm.dip.connector.config.baseUrl"))
+              timeout   =  Option(System.getProperty("dnpm.dip.connector.config.timeout.seconds")).map(_.toInt)
+              period    =  Option(System.getProperty("dnpm.dip.connector.config.update.period")).map(_.toLong)
             } yield LocalConfig(
-              siteId,
-              siteName,
+              Coding[Site](
+                siteId,
+                siteName,
+              ),
               baseUrl,
               timeout,
               period
@@ -254,16 +262,13 @@ extends HttpConnector(
     sitesConfig.get match {
       case map if (map.nonEmpty) =>
         map.collectFirst {
-          case (site,_) if (site.code.value == localConfig.siteId) => site
+          case (site,_) if (site.code.value == localConfig.localSite.code.value) => site
         }
         .get
 
       case _ =>
         log.warn("Global site config from broker not available, falling back to locally defined localSite info")
-        Coding[Site](
-          localConfig.siteId,
-          localConfig.siteName,
-        )
+        localConfig.localSite
     }
 
 
@@ -271,7 +276,7 @@ extends HttpConnector(
     sitesConfig.get match {
       case map if (map.nonEmpty) =>
         map.collect {
-          case (site,_) if (site.code.value != localConfig.siteId) => site
+          case (site,_) if (site.code.value != localConfig.localSite.code.value) => site
         }
         .toSet
 

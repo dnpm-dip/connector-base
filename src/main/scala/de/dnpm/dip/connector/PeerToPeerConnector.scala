@@ -47,25 +47,28 @@ private object PeerToPeerConnector
     peers: Map[Coding[Site],String],
     timeout: Option[Int]
   )
+  extends HttpConnector.Config
 
   private object Config extends Logging
   {
 
     /*
-    XML Config structure:
-    
-    <?xml version="1.0" encoding="UTF-8"?>
-    <ConnectorConfig>
-    
-      <Site id="..." name="..."/>
-      <Peer id ="MH"  name="Musterlingen"   baseUrl="http://localhost:80/Musterlingen"/>
-      <Peer id ="BSP" name="Beispielhausen" baseUrl="http://localhost:80/Beispielhausen"/>
-    
-      <!-- OPTIONAL request timeout (in seconds) -->
-      <Timeout seconds="10"/>
-    
-    </ConnectorConfig>
-    */
+     * XML Config structure:
+     *
+     * <?xml version="1.0" encoding="UTF-8"?>
+     * <Config>
+     *   ...
+     *   <Connector>
+     *    <Site id="..." name="..."/>
+     *    <Peer id ="MH"  name="Musterlingen"   baseUrl="http://localhost:80/Musterlingen"/>
+     *    <Peer id ="BSP" name="Beispielhausen" baseUrl="http://localhost:80/Beispielhausen"/>
+     *    
+     *    <!-- OPTIONAL request timeout (in seconds) -->
+     *    <Timeout seconds="10"/>
+     *   </Connector>
+     *   ...
+     * </Config>
+     */
 
     private def parseXMLConfig(in: InputStream): Config = {
     
@@ -74,12 +77,12 @@ private object PeerToPeerConnector
         else s
         
       val xml =
-        XML.load(in)
+        (XML.load(in) \\ "Connector")
     
       val localSite =
         Coding[Site](
-          code = (xml \ "Site" \@ "id"),
-          display = (xml \ "Site" \@ "name")
+          (xml \ "Site" \@ "id"),
+          (xml \ "Site" \@ "name")
         )
     
       val peers =
@@ -111,7 +114,7 @@ private object PeerToPeerConnector
 
       // Try reading config from classpath by default
       Try {
-        val file = "p2pConnectorConfig.xml"
+        val file = "connectorConfig.xml"
       
         log.debug(s"Loading connector config file '$file' from classpath...")
       
@@ -120,7 +123,7 @@ private object PeerToPeerConnector
       // else use system property for configFile path
       .recoverWith {
         case t =>
-          val sysProp = "dnpm.dip.peer2peer.connector.configFile"
+          val sysProp = "dnpm.dip.connector.configFile"
       
           log.debug(s"Couldn't get config file from classpath, trying file configured via system property '$sysProp'")
       

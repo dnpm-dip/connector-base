@@ -149,6 +149,14 @@ object HttpConnector
   }
 
 
+  trait Config
+  {
+    def localSite: Coding[Site]
+    def timeout: Option[Int]
+  }
+
+
+
   private implicit lazy val system: ActorSystem =
     ActorSystem()
 

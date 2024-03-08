@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ConnectorConfig>
+
+  <!--
+  Local Site ID as also defined in central config,
+  and also site name as fallback when central config not available
+  -->
+  <Site id="UKX" name="Standort X"/>
+
+  <!-- Base URL to DNPM-Proxy -->
+  <Broker baseURL="http://dummy.broker.localhost"/>
+
+  <!-- OPTIONAL: Request timeout -->
+  <!--
+  <Timeout seconds="10"/>
+  -->
+
+  <!-- OPTIONAL, for periodic auto-update of site list from broker: Period (in seconds) -->
+  <!--
+  <UpdatePeriod minutes="30"/>
+  -->
+
+</ConnectorConfig>
