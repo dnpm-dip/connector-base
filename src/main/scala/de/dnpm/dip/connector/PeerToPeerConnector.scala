@@ -123,7 +123,7 @@ private object PeerToPeerConnector
       // else use system property for configFile path
       .recoverWith {
         case t =>
-          val sysProp = "dnpm.dip.connector.config.file"
+          val sysProp = "dnpm.dip.config.file"
       
           log.debug(s"Couldn't get config file from classpath, trying file configured via system property '$sysProp'")
       

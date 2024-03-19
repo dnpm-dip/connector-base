@@ -132,7 +132,11 @@ private object BrokerConnector
     }
 
 
-    lazy val instance: LocalConfig =
+    
+    lazy val instance: LocalConfig = {
+
+      val sysProp = "dnpm.dip.config.file"
+
       // Try reading config from classpath by default
       Try {
         val file = "connectorConfig.xml"
@@ -144,8 +148,6 @@ private object BrokerConnector
       // else use system property for configFile path
       .recoverWith {
         case t =>
-          val sysProp = "dnpm.dip.connector.config.file"
-    
           log.debug(s"Couldn't get config file from classpath, trying file configured via system property '$sysProp'")
     
           Try { Option(System.getProperty(sysProp)).get }
@@ -155,6 +157,7 @@ private object BrokerConnector
       // else use system properties for siteId and baseUrl to instantiate Config
       .recoverWith {
         case t => 
+          log.warn(s"Couldn't get config file, most likely due to undefined property '$sysProp'. Attempting configuration via system properties...")
           Try {
             for {
               siteId    <- Option(System.getProperty("dnpm.dip.connector.config.siteId"))
@@ -175,6 +178,7 @@ private object BrokerConnector
           .map(_.get)
       }
       .get
+    }
     
   }  // end LocalConfig
 
