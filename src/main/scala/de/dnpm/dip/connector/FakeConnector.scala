@@ -17,7 +17,7 @@ import play.api.libs.json.{
 import de.dnpm.dip.util.Logging
 import de.dnpm.dip.coding.Coding
 import de.dnpm.dip.model.Site
-import de.dnpm.dip.service.query.{
+import de.dnpm.dip.service.{
   Connector,
   PeerToPeerRequest,
 }
@@ -32,10 +32,7 @@ object FakeConnector
 
 }
 
-private class FakeConnector[F[_]] extends Connector[
-  F,
-  Monad[F]
-]
+private class FakeConnector[F[_]] extends Connector[F,Monad[F]]
 {
 
   override def localSite: Coding[Site] =

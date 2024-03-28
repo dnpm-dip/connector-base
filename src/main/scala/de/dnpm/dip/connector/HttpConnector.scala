@@ -24,12 +24,22 @@ import play.api.libs.json.{
 import de.dnpm.dip.util.Logging
 import de.dnpm.dip.coding.Coding
 import de.dnpm.dip.model.Site
+import de.dnpm.dip.service.{
+  Connector,
+  PeerToPeerRequest
+}
+import de.dnpm.dip.service.query.{
+  PeerToPeerQuery,
+  PatientRecordRequest
+}
+/*
 import de.dnpm.dip.service.query.{
   Connector,
   PeerToPeerRequest,
   PeerToPeerQuery,
   PatientRecordRequest
 }
+*/
 import HttpMethod._
 
 
@@ -105,8 +115,7 @@ with Logging
                       .toSeq: _*
                   )
                   .withQueryStringParameters(
-                    "origin"  -> req.origin.code.value,
-                    "querier" -> req.querier.value
+                    "origin"  -> req.origin.code.value
                   )
               }
             )

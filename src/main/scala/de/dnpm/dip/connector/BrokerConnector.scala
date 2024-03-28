@@ -37,7 +37,6 @@ import play.api.libs.json.{
 import de.dnpm.dip.util.Logging
 import de.dnpm.dip.coding.Coding
 import de.dnpm.dip.model.Site
-import de.dnpm.dip.service.query.PeerToPeerRequest
 import cats.Monad
 
 

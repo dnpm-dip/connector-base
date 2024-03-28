@@ -6,23 +6,18 @@ import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers._
 import de.dnpm.dip.coding.Coding
 import de.dnpm.dip.model.Site
-import de.dnpm.dip.service.query.{
-  Querier,
-  PeerToPeerRequest
-}
+import de.dnpm.dip.service.PeerToPeerRequest
 import play.api.libs.json.{
   Json,
   JsObject,
   Writes
 }
-//import de.dnpm.dip.connector.HttpConnector
 import HttpMethod._
 
 
 
 final case class TestRequest(
   origin: Coding[Site],
-  querier: Querier
 )
 extends PeerToPeerRequest
 {
@@ -67,10 +62,7 @@ class Tests extends AsyncFlatSpec
   it must "have returned empty Map" in {
 
     val result = 
-      brokerConnector ! TestRequest(
-        brokerConnector.localSite,
-        Querier("Dummy-ID")
-      )
+      brokerConnector ! TestRequest(brokerConnector.localSite)
 
     result.map(_ must be (empty))
 
@@ -84,10 +76,7 @@ class Tests extends AsyncFlatSpec
   it must "have returned empty Map" in {
 
     val result = 
-      p2pConnector ! TestRequest(
-        p2pConnector.localSite,
-        Querier("Dummy-ID")
-      )
+      p2pConnector ! TestRequest(p2pConnector.localSite)
 
     result.map(_ must be (empty))
 
