@@ -66,7 +66,6 @@ private object BrokerConnector
 
   case class LocalConfig
   (
-    localSite: Coding[Site],
     private val url: String,
     timeout: Option[Int],
     updatePeriod: Option[Long]
@@ -94,12 +93,6 @@ private object BrokerConnector
      *    ...
      *    <Connector>
      *    
-     *      <!--
-     *      Local Site ID as also defined in central config,
-     *      and also site name as fallback when central config not available
-     *      -->
-     *      <Site id="..." name="..."/>
-     *      
      *      <!-- Base URL to DNPM-Proxy -->
      *      <Broker baseURL="http://localhost"/>
      *      
@@ -120,10 +113,6 @@ private object BrokerConnector
         (XML.load(in) \\ "Connector")
     
       LocalConfig(
-        Coding[Site](
-          (xml \ "Site" \@ "id"),
-          (xml \ "Site" \@ "name"),
-        ),
         (xml \ "Broker" \@ "baseURL"),
         Try(xml \ "Timeout" \@ "seconds").map(_.toInt).toOption,
         Try(xml \ "UpdatePeriod" \@ "minutes").map(_.toLong).toOption
@@ -159,16 +148,10 @@ private object BrokerConnector
           log.warn(s"Couldn't get config file, most likely due to undefined property '$sysProp'. Attempting configuration via system properties...")
           Try {
             for {
-              siteId    <- Option(System.getProperty("dnpm.dip.connector.config.siteId"))
-              siteName  <- Option(System.getProperty("dnpm.dip.connector.config.siteName"))
               baseUrl   <- Option(System.getProperty("dnpm.dip.connector.config.baseUrl"))
               timeout   =  Option(System.getProperty("dnpm.dip.connector.config.timeout.seconds")).map(_.toInt)
               period    =  Option(System.getProperty("dnpm.dip.connector.config.update.period")).map(_.toLong)
             } yield LocalConfig(
-              Coding[Site](
-                siteId,
-                siteName,
-              ),
               baseUrl,
               timeout,
               period
@@ -262,25 +245,11 @@ extends HttpConnector(
     )
   }
 
-  override def localSite: Coding[Site] =
-    sitesConfig.get match {
-      case map if (map.nonEmpty) =>
-        map.collectFirst {
-          case (site,_) if (site.code.value == localConfig.localSite.code.value) => site
-        }
-        .get
-
-      case _ =>
-        log.warn("Global site config from broker not available, falling back to locally defined localSite info")
-        localConfig.localSite
-    }
-
-
   override def otherSites: Set[Coding[Site]] =
     sitesConfig.get match {
       case map if (map.nonEmpty) =>
         map.collect {
-          case (site,_) if (site.code.value != localConfig.localSite.code.value) => site
+          case (site,_) if (site.code != Site.local.code) => site
         }
         .toSet
 

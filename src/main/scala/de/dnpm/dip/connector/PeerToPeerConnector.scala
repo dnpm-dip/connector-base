@@ -36,7 +36,6 @@ private object PeerToPeerConnector
 
   case class Config
   (
-    localSite: Coding[Site],
     peers: Map[Coding[Site],String],
     timeout: Option[Int]
   )
@@ -52,7 +51,6 @@ private object PeerToPeerConnector
      * <Config>
      *   ...
      *   <Connector>
-     *    <Site id="..." name="..."/>
      *    <Peer id ="MH"  name="Musterlingen"   baseUrl="http://localhost:80/Musterlingen"/>
      *    <Peer id ="BSP" name="Beispielhausen" baseUrl="http://localhost:80/Beispielhausen"/>
      *    
@@ -71,16 +69,10 @@ private object PeerToPeerConnector
         
       val xml =
         (XML.load(in) \\ "Connector")
-    
-      val localSite =
-        Coding[Site](
-          (xml \ "Site" \@ "id"),
-          (xml \ "Site" \@ "name")
-        )
-    
+        
       val peers =
         (xml \ "Peer").map {
-          peer =>
+          peer =>            
             val site =
               Coding[Site](
                 code = (peer \@ "id"),
@@ -95,7 +87,6 @@ private object PeerToPeerConnector
         .toMap
     
       Config(
-        localSite,
         peers,
         Try(xml \ "Timeout" \@ "seconds")
           .map(_.toInt)
@@ -157,10 +148,6 @@ extends HttpConnector(baseUri,requestMapper,wsclient)
   private val timeout =
    config.timeout.getOrElse(10) seconds
 
-
-  override val localSite: Coding[Site] =
-    config.localSite
-    
   override val otherSites: Set[Coding[Site]] =
     config.peers.keySet
 

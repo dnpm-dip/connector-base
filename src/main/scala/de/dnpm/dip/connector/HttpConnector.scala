@@ -32,14 +32,6 @@ import de.dnpm.dip.service.query.{
   PeerToPeerQuery,
   PatientRecordRequest
 }
-/*
-import de.dnpm.dip.service.query.{
-  Connector,
-  PeerToPeerRequest,
-  PeerToPeerQuery,
-  PatientRecordRequest
-}
-*/
 import HttpMethod._
 
 
@@ -137,7 +129,6 @@ with Logging
 }
 
 
-
 object HttpConnector
 {
 
@@ -152,18 +143,17 @@ object HttpConnector
   {
     val PeerToPeer = Value("peer2peer")
     val Broker     = Value("broker")
-
+    
+    val property = "dnpm.dip.connector.type"
+    
     def unapply(s: String): Option[Value] =
       values.find(_.toString.toLowerCase == s.toLowerCase)
   }
 
-
   trait Config
   {
-    def localSite: Coding[Site]
     def timeout: Option[Int]
   }
-
 
 
   private implicit lazy val system: ActorSystem =
@@ -177,25 +167,6 @@ object HttpConnector
 
 
   import Type._
-
-/*
-  val baseRequestMapper: RequestMapper = { 
-
-    case req: PeerToPeerQuery[_,_] =>
-      (POST, "query", Map.empty, true)
-
-    case req: PatientRecordRequest[_] =>
-      val queryParams =
-        Map(
-          "origin"  -> Seq(req.origin.code.value),
-          "querier" -> Seq(req.querier.value),
-          "patient" -> Seq(req.patient.value),
-        ) ++ req.snapshot.map(snp => "snapshot" -> Seq(snp.toString))
-
-      (GET, "patient-record", queryParams, false)
-
-  }
-*/
 
   val baseRequestMapper: RequestMapper = { 
 

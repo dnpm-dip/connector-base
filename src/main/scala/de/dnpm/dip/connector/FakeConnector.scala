@@ -35,12 +35,6 @@ object FakeConnector
 private class FakeConnector[F[_]] extends Connector[F,Monad[F]]
 {
 
-  override def localSite: Coding[Site] =
-    Coding[Site](
-      "UKx",
-      "Musterhausen"
-    )
-
   override def otherSites: Set[Coding[Site]] =
     Set.empty
 

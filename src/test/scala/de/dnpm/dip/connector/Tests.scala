@@ -35,6 +35,9 @@ object TestRequest
 class Tests extends AsyncFlatSpec
 {
 
+  System.setProperty(Site.property,"UKx:Musterlingen")
+
+
   private val brokerConnector =
     HttpConnector(
       HttpConnector.Type.Broker,
@@ -62,7 +65,7 @@ class Tests extends AsyncFlatSpec
   it must "have returned empty Map" in {
 
     val result = 
-      brokerConnector ! TestRequest(brokerConnector.localSite)
+      brokerConnector ! TestRequest(Site.local)
 
     result.map(_ must be (empty))
 
@@ -76,7 +79,7 @@ class Tests extends AsyncFlatSpec
   it must "have returned empty Map" in {
 
     val result = 
-      p2pConnector ! TestRequest(p2pConnector.localSite)
+      p2pConnector ! TestRequest(Site.local)
 
     result.map(_ must be (empty))
 
