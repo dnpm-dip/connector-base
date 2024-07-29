@@ -8,10 +8,11 @@
   <Site id="UKX" name="Standort X"/>
 
   <!-- Base URL to DNPM-Proxy -->
-  <Broker baseURL="http://dummy.broker.localhost"/>
+  <Broker baseURL="http://localhost"/>
 
   <!-- OPTIONAL: Request timeout -->
   <!--
+  <Broker baseURL="http://dummy.broker.localhost"/>
   <Timeout seconds="10"/>
   -->
 

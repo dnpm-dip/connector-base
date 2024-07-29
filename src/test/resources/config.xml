@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+  <Connector>
+
+    <!-- Base URL to DNPM-Broker-Proxy -->
+    <Broker baseURL="http://localhost"/>
+     
+  </Connector>
+

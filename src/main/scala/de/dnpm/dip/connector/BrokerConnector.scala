@@ -77,7 +77,7 @@ private object BrokerConnector
         if (url endsWith "/")
           url.substring(0,url.length-1)
         else
-          s"$url"
+          url
       )
       .toURL
   }
@@ -127,7 +127,7 @@ private object BrokerConnector
 
       // Try reading config from classpath by default
       Try {
-        val file = "connectorConfig.xml"
+        val file = "config.xml"
     
         log.debug(s"Loading connector config file '$file' from classpath...")
     
@@ -233,16 +233,20 @@ extends HttpConnector(
   private val sitesConfig: AtomicReference[Map[Coding[Site],String]] =
     new AtomicReference(Map.empty)
 
-  private val executor =
+
+  private lazy val executor =
     Executors.newSingleThreadScheduledExecutor
 
-  for { period <- localConfig.updatePeriod }{
-    executor.scheduleAtFixedRate(
-      () => getSiteConfig,
-      period,
-      period,
-      MINUTES
-    )
+  localConfig.updatePeriod match {
+    case Some(period) =>
+      executor.scheduleAtFixedRate(
+        () => getSiteConfig,
+        0,
+        period,
+        MINUTES
+      )
+    case None =>
+      getSiteConfig
   }
 
   override def otherSites: Set[Coding[Site]] =
