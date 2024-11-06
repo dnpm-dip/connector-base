@@ -37,7 +37,7 @@ import HttpMethod._
 
 abstract class HttpConnector
 (
-  private val baseUri: String,
+  _baseUri: String,
   private val requestMapper: HttpConnector.RequestMapper,
   private val wsclient: StandaloneWSClient
 )
@@ -49,6 +49,13 @@ with Logging
   import scala.util.chaining._
 
   import scala.concurrent.ExecutionContext.Implicits.global
+
+
+  private val baseUri =
+    _baseUri match {
+      case uri if !uri.endsWith("/") => s"$uri/"
+      case uri => uri 
+    }
 
 
   protected def request(
@@ -89,8 +96,9 @@ with Logging
     val (method,uri,queryParams) =
       requestMapper(req)
 
+
     scatterGather(
-      baseUri + uri,
+      s"$baseUri$uri".replace("//","/"),
       sites,
       {
         case (site,request) =>
@@ -170,11 +178,9 @@ object HttpConnector
 
   val baseRequestMapper: RequestMapper = { 
 
-    case req: PeerToPeerQuery[_,_] =>
-      (POST, "query", Map.empty)
+    case req: PeerToPeerQuery[_,_]    => (POST, "query", Map.empty)
 
-    case req: PatientRecordRequest[_] =>
-      (GET, "patient-record", Map.empty)
+    case req: PatientRecordRequest[_] => (GET, "patient-record", Map.empty)
 
   }
 
@@ -182,7 +188,7 @@ object HttpConnector
   def apply(
     typ: Type.Value,
     baseUri: String,
-    requestMapper: HttpConnector.RequestMapper
+    requestMapper: HttpConnector.RequestMapper = PartialFunction.empty
   ): HttpConnector =
     typ match {
 
