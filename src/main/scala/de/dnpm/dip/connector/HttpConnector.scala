@@ -33,7 +33,6 @@ import HttpMethod._
 
 abstract class HttpConnector
 (
-//  _baseUri: String,
   private val requestMapper: HttpConnector.RequestMapper,
   private val wsclient: StandaloneWSClient
 )
