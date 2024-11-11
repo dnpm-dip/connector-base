@@ -28,16 +28,12 @@ import de.dnpm.dip.service.{
   Connector,
   PeerToPeerRequest
 }
-import de.dnpm.dip.service.query.{
-  PeerToPeerQuery,
-  PatientRecordRequest
-}
 import HttpMethod._
 
 
 abstract class HttpConnector
 (
-  _baseUri: String,
+//  _baseUri: String,
   private val requestMapper: HttpConnector.RequestMapper,
   private val wsclient: StandaloneWSClient
 )
@@ -47,15 +43,7 @@ with Logging
   self =>
 
   import scala.util.chaining._
-
   import scala.concurrent.ExecutionContext.Implicits.global
-
-
-  private val baseUri =
-    _baseUri match {
-      case uri if !uri.endsWith("/") => s"$uri/"
-      case uri => uri 
-    }
 
 
   protected def request(
@@ -93,12 +81,10 @@ with Logging
 
     import cats.syntax.either._
 
-    val (method,uri,queryParams) =
-      requestMapper(req)
-
+    val (method,uri,queryParams) = requestMapper(req)
 
     scatterGather(
-      s"$baseUri$uri".replace("//","/"),
+      uri,
       sites,
       {
         case (site,request) =>
@@ -140,12 +126,6 @@ with Logging
 object HttpConnector
 {
 
-  type RequestMapper =
-    PartialFunction[
-      PeerToPeerRequest,
-      (HttpMethod.Value,String,Map[String,Seq[String]])
-    ] 
-
 
   object Type extends Enumeration
   {
@@ -174,35 +154,31 @@ object HttpConnector
     StandaloneAhcWSClient()
 
 
-  import Type._
+  // Convert a Request into triple of HTTP Method, URI and Query Parameters
+  type RequestMapper =
+    PartialFunction[
+      PeerToPeerRequest,
+      (HttpMethod.Value,String,Map[String,Seq[String]])
+    ] 
 
-  val baseRequestMapper: RequestMapper = { 
 
-    case req: PeerToPeerQuery[_,_]    => (POST, "query", Map.empty)
-
-    case req: PatientRecordRequest[_] => (GET, "patient-record", Map.empty)
-
-  }
-
+  import Type.{Broker,PeerToPeer}
 
   def apply(
     typ: Type.Value,
-    baseUri: String,
-    requestMapper: HttpConnector.RequestMapper = PartialFunction.empty
+    requestMapper: HttpConnector.RequestMapper
   ): HttpConnector =
     typ match {
 
-      case PeerToPeer => 
-        PeerToPeerConnector(
-          baseUri,
-          baseRequestMapper.orElse(requestMapper),
-          wsclient,
-        )
-
       case Broker => 
         BrokerConnector(
-          baseUri,
-          baseRequestMapper.orElse(requestMapper),
+          requestMapper,          
+          wsclient
+        )
+
+      case PeerToPeer => 
+        PeerToPeerConnector(
+          requestMapper,          
           wsclient
         )
 

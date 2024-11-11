@@ -166,12 +166,10 @@ private object BrokerConnector
 
 
   def apply(
-    baseUri: String,
     requestMapper: HttpConnector.RequestMapper,
     wsclient: StandaloneWSClient
   ): BrokerConnector =
     new BrokerConnector(
-      baseUri,
       requestMapper,
       wsclient,
       LocalConfig.instance
@@ -182,13 +180,11 @@ private object BrokerConnector
 
 private class BrokerConnector
 (
-  private val baseUri: String,
   private val requestMapper: HttpConnector.RequestMapper,
   private val wsclient: StandaloneWSClient,
   private val localConfig: BrokerConnector.LocalConfig
 )
 extends HttpConnector(
-  baseUri,
   requestMapper,
   wsclient
 )

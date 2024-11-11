@@ -122,12 +122,10 @@ private object PeerToPeerConnector
   }
 
   def apply(
-    baseUri: String,
     requestMapper: HttpConnector.RequestMapper,
     wsclient: StandaloneWSClient
   ): PeerToPeerConnector =
     new PeerToPeerConnector(
-      baseUri,
       requestMapper,
       wsclient,
       Config.instance
@@ -137,12 +135,14 @@ private object PeerToPeerConnector
 
 
 private class PeerToPeerConnector private (
-  private val baseUri: String,
   private val requestMapper: HttpConnector.RequestMapper,
   private val wsclient: StandaloneWSClient,
   private val config: PeerToPeerConnector.Config
 )
-extends HttpConnector(baseUri,requestMapper,wsclient)
+extends HttpConnector(
+  requestMapper,
+  wsclient
+)
 {
 
   private val timeout =
