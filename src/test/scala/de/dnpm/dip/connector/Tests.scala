@@ -41,18 +41,16 @@ class Tests extends AsyncFlatSpec
   private val brokerConnector =
     HttpConnector(
       HttpConnector.Type.Broker,
-      "/api/peer-to-peer/dummy-use-case",
       {
-        case _: TestRequest => (POST,"test",Map.empty)
+        case _: TestRequest => (POST,"/api/peer-to-peer/dummy-use-case/test",Map.empty)
       }
     )
 
   private val p2pConnector =
     HttpConnector(
       HttpConnector.Type.PeerToPeer,
-      "/api/peer-to-peer/dummy-use-case",
       {
-        case _: TestRequest => (POST,"test",Map.empty)
+        case _: TestRequest => (POST,"/api/peer-to-peer/dummy-use-case/test",Map.empty)
       }
     )
 

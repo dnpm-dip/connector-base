@@ -198,21 +198,29 @@ extends HttpConnector(
 
   import java.time.{Duration,LocalTime}
   import java.util.concurrent.Executors
-  import java.util.concurrent.TimeUnit.MINUTES
+  import java.util.concurrent.TimeUnit.{MINUTES,SECONDS}
   import java.util.concurrent.atomic.AtomicReference
 
+  private lazy val executor =
+    Executors.newSingleThreadScheduledExecutor
+
+
+  private var failedTries = 0
+  private val maxTries    = 5
+  private val retryPeriod = 30
 
   private def getSiteConfig: Unit = {
 
     import ExecutionContext.Implicits.global
 
-    log.debug(s"Requesting peer connectivity config")
+    log.info(s"Requesting peer connectivity config from broker")
 
     request("/sites")
       .get()
       .map(_.body[JsValue].as[BrokerConnector.SiteConfig])
       .onComplete {
         case Success(config) =>
+          failedTries = 0
           sitesConfig.set(
             config.sites.map {
               case BrokerConnector.SiteEntry(id,name,vhost) => Coding[Site](id,name) -> vhost
@@ -222,6 +230,17 @@ extends HttpConnector(
 
         case Failure(t) =>
           log.error(s"Broker connection error: ${t.getMessage}")
+          failedTries += 1
+          if (failedTries < maxTries){
+            log.warn(s"Retrying broker connection in $retryPeriod seconds")
+            executor.schedule(
+              new Runnable { override def run = getSiteConfig },
+              30,
+              SECONDS
+            )
+          } else
+            log.error(s"Permanent broker connection failure after $failedTries tries, ensure the overall networking configuration is correct")
+          
       }
 
   }
@@ -229,9 +248,6 @@ extends HttpConnector(
   private val sitesConfig: AtomicReference[Map[Coding[Site],String]] =
     new AtomicReference(Map.empty)
 
-
-  private lazy val executor =
-    Executors.newSingleThreadScheduledExecutor
 
   localConfig.updatePeriod match {
     case Some(period) =>
@@ -244,6 +260,7 @@ extends HttpConnector(
     case None =>
       getSiteConfig
   }
+
 
   override def otherSites: Set[Coding[Site]] =
     sitesConfig.get match {
