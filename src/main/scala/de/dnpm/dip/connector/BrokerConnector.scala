@@ -235,7 +235,7 @@ extends HttpConnector(
             log.warn(s"Retrying broker connection in $retryPeriod seconds")
             executor.schedule(
               new Runnable { override def run = getSiteConfig },
-              30,
+              retryPeriod,
               SECONDS
             )
           } else
