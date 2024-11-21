@@ -275,10 +275,8 @@ private class BrokerConnector
 )
 extends HttpConnector(requestMapper){
 
-  import BrokerConnector._
-
   override def otherSites: Set[Coding[Site]] =
-    sitesConfig.get match {
+    BrokerConnector.sitesConfig.get match {
       case map if (map.nonEmpty) =>
         map.collect {
           case (site,_) if (site.code != Site.local.code) => site
@@ -296,6 +294,8 @@ extends HttpConnector(requestMapper){
     rawUri: String
   ): WSRequest = 
     BrokerConnector.request(rawUri)
-      .withVirtualHost(sitesConfig.get()(site))
+      .withVirtualHost(
+        BrokerConnector.sitesConfig.get()(site)
+      )
 
 }
