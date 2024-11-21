@@ -3,8 +3,6 @@ package de.dnpm.dip.connector
 
 import scala.concurrent.Future
 import cats.Monad
-import akka.actor.ActorSystem
-import akka.stream.Materializer
 import play.api.libs.ws.{
   StandaloneWSClient,
   StandaloneWSRequest => WSRequest,
@@ -33,8 +31,7 @@ import HttpMethod._
 
 abstract class HttpConnector
 (
-  private val requestMapper: HttpConnector.RequestMapper,
-  private val wsclient: StandaloneWSClient
+  private val requestMapper: HttpConnector.RequestMapper
 )
 extends Connector[Future,Monad[Future]]
 with Logging
@@ -125,7 +122,6 @@ with Logging
 object HttpConnector
 {
 
-
   object Type extends Enumeration
   {
     val PeerToPeer = Value("peer2peer")
@@ -143,16 +139,6 @@ object HttpConnector
   }
 
 
-  private implicit lazy val system: ActorSystem =
-    ActorSystem()
-
-  private implicit lazy val materializer: Materializer =
-    Materializer.matFromSystem
-
-  private lazy val wsclient =
-    StandaloneAhcWSClient()
-
-
   // Convert a Request into triple of HTTP Method, URI and Query Parameters
   type RequestMapper =
     PartialFunction[
@@ -161,25 +147,15 @@ object HttpConnector
     ] 
 
 
-  import Type.{Broker,PeerToPeer}
-
   def apply(
     typ: Type.Value,
     requestMapper: HttpConnector.RequestMapper
   ): HttpConnector =
     typ match {
 
-      case Broker => 
-        BrokerConnector(
-          requestMapper,          
-          wsclient
-        )
+      case Type.Broker     => BrokerConnector(requestMapper)
 
-      case PeerToPeer => 
-        PeerToPeerConnector(
-          requestMapper,          
-          wsclient
-        )
+      case Type.PeerToPeer => PeerToPeerConnector(requestMapper)
 
     }
 

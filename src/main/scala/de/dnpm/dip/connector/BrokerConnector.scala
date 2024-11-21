@@ -22,11 +22,14 @@ import scala.concurrent.{
   Future
 }
 import scala.concurrent.duration._
+import akka.actor.ActorSystem
+import akka.stream.Materializer
 import play.api.libs.ws.{
   StandaloneWSClient,
   StandaloneWSRequest => WSRequest,
   StandaloneWSResponse => WSResponse
 }
+import play.api.libs.ws.ahc.StandaloneAhcWSClient
 import play.api.libs.ws.JsonBodyReadables._
 import play.api.libs.ws.DefaultBodyReadables._
 import play.api.libs.json.{
@@ -40,7 +43,7 @@ import de.dnpm.dip.model.Site
 import cats.Monad
 
 
-private object BrokerConnector
+private object BrokerConnector extends Logging
 {
 
   final case class SiteEntry
@@ -119,7 +122,6 @@ private object BrokerConnector
       )
     }
 
-
     
     lazy val instance: LocalConfig = {
 
@@ -165,45 +167,40 @@ private object BrokerConnector
   }  // end LocalConfig
 
 
-  def apply(
-    requestMapper: HttpConnector.RequestMapper,
-    wsclient: StandaloneWSClient
-  ): BrokerConnector =
-    new BrokerConnector(
-      requestMapper,
-      wsclient,
-      LocalConfig.instance
-    )
+  private implicit lazy val system: ActorSystem =
+    ActorSystem()
 
-}
+  private implicit lazy val materializer: Materializer =
+    Materializer.matFromSystem
 
-
-private class BrokerConnector
-(
-  private val requestMapper: HttpConnector.RequestMapper,
-  private val wsclient: StandaloneWSClient,
-  private val localConfig: BrokerConnector.LocalConfig
-)
-extends HttpConnector(
-  requestMapper,
-  wsclient
-)
-{
+  private lazy val wsclient =
+    StandaloneAhcWSClient()
 
   private val timeout =
-    localConfig.timeout.getOrElse(10) seconds
+    LocalConfig.instance.timeout.getOrElse(10) seconds
+
+  private def request(
+    rawUri: String
+  ): WSRequest = {
+
+    val uri =
+      if (rawUri startsWith "/") rawUri.substring(1)
+      else rawUri
+
+    wsclient.url(s"${LocalConfig.instance.baseURL}/$uri")
+      .withRequestTimeout(timeout)
+        
+  }
 
 
   // Set-up for periodic auto-update of config
-
   import java.time.{Duration,LocalTime}
   import java.util.concurrent.Executors
-  import java.util.concurrent.TimeUnit.{MINUTES,SECONDS}
+  import java.util.concurrent.TimeUnit.{SECONDS}
   import java.util.concurrent.atomic.AtomicReference
 
   private lazy val executor =
     Executors.newSingleThreadScheduledExecutor
-
 
   private var failedTries = 0
   private val maxTries    = 5
@@ -249,18 +246,36 @@ extends HttpConnector(
     new AtomicReference(Map.empty)
 
 
-  localConfig.updatePeriod match {
+  LocalConfig.instance.updatePeriod match {
     case Some(period) =>
       executor.scheduleAtFixedRate(
         () => getSiteConfig,
         0,
-        period,
-        MINUTES
+        period*60,
+        SECONDS
       )
     case None =>
       getSiteConfig
   }
 
+
+  def apply(
+    requestMapper: HttpConnector.RequestMapper,
+  ): BrokerConnector =
+    new BrokerConnector(
+      requestMapper
+    )
+
+}
+
+
+private class BrokerConnector
+(
+  private val requestMapper: HttpConnector.RequestMapper
+)
+extends HttpConnector(requestMapper){
+
+  import BrokerConnector._
 
   override def otherSites: Set[Coding[Site]] =
     sitesConfig.get match {
@@ -275,26 +290,12 @@ extends HttpConnector(
         Set.empty[Coding[Site]]
     }
 
-
-  private def request(
-    rawUri: String
-  ): WSRequest = {
-
-    val uri =
-      if (rawUri startsWith "/") rawUri.substring(1)
-      else rawUri
-
-    wsclient.url(s"${localConfig.baseURL}/$uri")
-      .withRequestTimeout(timeout)
-        
-  }
-
   
   override def request(
     site: Coding[Site],
     rawUri: String
   ): WSRequest = 
-    request(rawUri)
+    BrokerConnector.request(rawUri)
       .withVirtualHost(sitesConfig.get()(site))
 
 }

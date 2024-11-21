@@ -21,15 +21,19 @@ import scala.concurrent.{
   Future
 }
 import scala.concurrent.duration._
+import akka.actor.ActorSystem
+import akka.stream.Materializer
 import play.api.libs.ws.{
   StandaloneWSClient,
   StandaloneWSRequest => WSRequest,
   StandaloneWSResponse => WSResponse
 }
+import play.api.libs.ws.ahc.StandaloneAhcWSClient
 import de.dnpm.dip.util.Logging
 import play.api.libs.json.JsValue
 import de.dnpm.dip.coding.Coding
 import de.dnpm.dip.model.Site
+
 
 private object PeerToPeerConnector
 {
@@ -121,9 +125,19 @@ private object PeerToPeerConnector
 
   }
 
+
+  private implicit lazy val system: ActorSystem =
+    ActorSystem()
+
+  private implicit lazy val materializer: Materializer =
+    Materializer.matFromSystem
+
+  private lazy val wsclient =
+    StandaloneAhcWSClient()
+
+
   def apply(
-    requestMapper: HttpConnector.RequestMapper,
-    wsclient: StandaloneWSClient
+    requestMapper: HttpConnector.RequestMapper
   ): PeerToPeerConnector =
     new PeerToPeerConnector(
       requestMapper,
@@ -139,11 +153,7 @@ private class PeerToPeerConnector private (
   private val wsclient: StandaloneWSClient,
   private val config: PeerToPeerConnector.Config
 )
-extends HttpConnector(
-  requestMapper,
-  wsclient
-)
-{
+extends HttpConnector(requestMapper){
 
   private val timeout =
    config.timeout.getOrElse(10) seconds
