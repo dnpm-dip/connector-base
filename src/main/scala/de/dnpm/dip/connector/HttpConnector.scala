@@ -21,7 +21,10 @@ import play.api.libs.json.{
 }
 import de.dnpm.dip.util.Logging
 import de.dnpm.dip.coding.Coding
-import de.dnpm.dip.model.Site
+import de.dnpm.dip.model.{
+  ClosedInterval,
+  Site
+}
 import de.dnpm.dip.service.{
   Connector,
   PeerToPeerRequest
@@ -40,6 +43,8 @@ with Logging
 
   import scala.util.chaining._
   import scala.concurrent.ExecutionContext.Implicits.global
+  import cats.syntax.either._
+  import de.dnpm.dip.model.Interval.IntervalOps  // for "t isIn Interval" syntax
 
 
   protected def request(
@@ -64,6 +69,11 @@ with Logging
     )(
       _ + _
     )
+
+
+
+//  private val successCodes = ClosedInterval(200 -> 299)
+  private val successCodes = 200 to 299
 
 
   override def submit[T <: PeerToPeerRequest: Writes](
@@ -97,16 +107,31 @@ with Logging
                       .toSeq: _*
                   )
                   .withQueryStringParameters(
-                    "origin"  -> req.origin.code.value
+                    "origin" -> req.origin.code.value
                   )
               }
             )
             .execute(method.toString)
-            .map(_.body[JsValue].as[req.ResultType])
-            .map(_.asRight[String])
+            .map( 
+              resp =>
+                if (successCodes contains resp.status){
+                  resp.body[JsValue]
+                    .validate[req.ResultType]
+                    .asEither
+                    .leftMap(
+                      errs =>
+                        "Invalid JSON response payload"
+                          .tap(msg => log error s"$msg:\n${errs.mkString("\n")}")
+                    )
+                } else {
+                  s"${resp.status} ${resp.statusText}"
+                    .tap(msg => log error s"In peer-to-peer response from site ${site.display.get}: $msg")
+                    .asLeft
+                }
+            )
             .recover {
               case t =>
-                s"Error in peer-to-peer response from site ${site.display.get}: ${t.getMessage}"
+                s"In peer-to-peer request to site ${site.display.get}: ${t.getMessage}"
                   .tap(log.error)
                   .asLeft[req.ResultType]
             }
