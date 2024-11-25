@@ -44,7 +44,7 @@ with Logging
 
   protected def request(
     site: Coding[Site],
-    rawUri: String
+    uri: String
   ): WSRequest
 
 

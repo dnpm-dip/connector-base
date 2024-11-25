@@ -291,9 +291,10 @@ extends HttpConnector(requestMapper){
   
   override def request(
     site: Coding[Site],
-    rawUri: String
+    uri: String
   ): WSRequest = 
-    BrokerConnector.request(rawUri)
+    BrokerConnector
+      .request(uri)
       .withVirtualHost(
         BrokerConnector.sitesConfig.get()(site)
       )
