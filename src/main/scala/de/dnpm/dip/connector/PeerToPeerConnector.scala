@@ -1,36 +1,25 @@
 package de.dnpm.dip.connector
 
 
-import java.net.URL
 import java.io.{
   FileInputStream,
   InputStream
 }
-import java.net.{
-  URI,
-  URL
-}
 import scala.util.{
   Try,
-  Failure,
   Using
 }
 import scala.xml._
-import scala.concurrent.{
-  ExecutionContext,
-  Future
-}
 import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import play.api.libs.ws.{
   StandaloneWSClient,
-  StandaloneWSRequest => WSRequest,
-  StandaloneWSResponse => WSResponse
+  StandaloneWSRequest,
+//  StandaloneWiSResponse
 }
 import play.api.libs.ws.ahc.StandaloneAhcWSClient
 import de.dnpm.dip.util.Logging
-import play.api.libs.json.JsValue
 import de.dnpm.dip.coding.Coding
 import de.dnpm.dip.model.Site
 
@@ -110,7 +99,7 @@ private object PeerToPeerConnector
       }
       // else use system property for configFile path
       .recoverWith {
-        case t =>
+        case _ =>
           val sysProp = "dnpm.dip.config.file"
       
           log.debug(s"Couldn't get config file from classpath, trying file configured via system property '$sysProp'")
@@ -164,9 +153,7 @@ extends HttpConnector(requestMapper){
   override def request(
     site: Coding[Site],
     rawUri: String,
-  ): WSRequest = {
-
-    import scala.util.chaining._
+  ): StandaloneWSRequest = {
 
     val uri =
       if (rawUri startsWith "/") rawUri.substring(1)

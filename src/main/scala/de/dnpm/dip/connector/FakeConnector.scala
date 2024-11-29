@@ -1,20 +1,11 @@
 package de.dnpm.dip.connector
 
 
-import java.net.URL
-import scala.util.{
-  Success,
-  Failure
-}
-import scala.concurrent.{
-  ExecutionContext,
-  Future
-}
+
 import play.api.libs.json.{
   Reads,
   Writes
 }
-import de.dnpm.dip.util.Logging
 import de.dnpm.dip.coding.Coding
 import de.dnpm.dip.model.Site
 import de.dnpm.dip.service.{

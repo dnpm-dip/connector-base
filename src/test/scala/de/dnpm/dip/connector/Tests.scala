@@ -1,7 +1,6 @@
 package de.dnpm.dip.connector
 
 
-import scala.concurrent.Future
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.must.Matchers._
 import de.dnpm.dip.coding.Coding

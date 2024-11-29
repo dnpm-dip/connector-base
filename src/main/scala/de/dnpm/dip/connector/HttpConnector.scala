@@ -3,16 +3,9 @@ package de.dnpm.dip.connector
 
 import scala.concurrent.Future
 import cats.Monad
-import play.api.libs.ws.{
-  StandaloneWSClient,
-  StandaloneWSRequest => WSRequest,
-  StandaloneWSResponse => WSResponse
-}
-import play.api.libs.ws.ahc.StandaloneAhcWSClient
+import play.api.libs.ws.StandaloneWSRequest
 import play.api.libs.ws.JsonBodyReadables._
 import play.api.libs.ws.JsonBodyWritables._
-import play.api.libs.ws.DefaultBodyWritables._
-import play.api.libs.ws.DefaultBodyReadables._
 import play.api.libs.json.{
   Json,
   JsValue,
@@ -21,10 +14,7 @@ import play.api.libs.json.{
 }
 import de.dnpm.dip.util.Logging
 import de.dnpm.dip.coding.Coding
-import de.dnpm.dip.model.{
-  ClosedInterval,
-  Site
-}
+import de.dnpm.dip.model.Site
 import de.dnpm.dip.service.{
   Connector,
   PeerToPeerRequest
@@ -43,20 +33,18 @@ with Logging
 
   import scala.util.chaining._
   import scala.concurrent.ExecutionContext.Implicits.global
-  import cats.syntax.either._
-  import de.dnpm.dip.model.Interval.IntervalOps  // for "t isIn Interval" syntax
 
 
   protected def request(
     site: Coding[Site],
     uri: String
-  ): WSRequest
+  ): StandaloneWSRequest
 
 
   private def scatterGather[T](
     uri: String,
     sites: Set[Coding[Site]],
-    f: (Coding[Site],WSRequest) => Future[(Coding[Site],T)]
+    f: (Coding[Site],StandaloneWSRequest) => Future[(Coding[Site],T)]
   ): Future[Map[Coding[Site],T]] =
     Future.foldLeft(
       for {

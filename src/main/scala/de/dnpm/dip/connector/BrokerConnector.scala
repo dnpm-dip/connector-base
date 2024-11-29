@@ -1,15 +1,11 @@
 package de.dnpm.dip.connector
 
 
-import java.net.URL
 import java.io.{
   FileInputStream,
   InputStream
 }
-import java.net.{
-  URI,
-  URL
-}
+import java.net.URI
 import scala.util.{
   Try,
   Success,
@@ -17,21 +13,13 @@ import scala.util.{
   Using
 }
 import scala.xml.XML
-import scala.concurrent.{
-  ExecutionContext,
-  Future
-}
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import play.api.libs.ws.{
-  StandaloneWSClient,
-  StandaloneWSRequest => WSRequest,
-  StandaloneWSResponse => WSResponse
-}
+import play.api.libs.ws.StandaloneWSRequest
 import play.api.libs.ws.ahc.StandaloneAhcWSClient
 import play.api.libs.ws.JsonBodyReadables._
-import play.api.libs.ws.DefaultBodyReadables._
 import play.api.libs.json.{
   Json,
   JsValue,
@@ -40,7 +28,6 @@ import play.api.libs.json.{
 import de.dnpm.dip.util.Logging
 import de.dnpm.dip.coding.Coding
 import de.dnpm.dip.model.Site
-import cats.Monad
 
 
 private object BrokerConnector extends Logging
@@ -137,7 +124,7 @@ private object BrokerConnector extends Logging
       }
       // else use system property for configFile path
       .recoverWith {
-        case t =>
+        case _ =>
           log.debug(s"Couldn't get config file from classpath, trying file configured via system property '$sysProp'")
     
           Try { Option(System.getProperty(sysProp)).get }
@@ -146,7 +133,7 @@ private object BrokerConnector extends Logging
       .flatMap(Using(_)(parseXMLConfig))
       // else use system properties for siteId and baseUrl to instantiate Config
       .recoverWith {
-        case t => 
+        case _ => 
           log.warn(s"Couldn't get config file, most likely due to undefined property '$sysProp'. Attempting configuration via system properties...")
           Try {
             for {
@@ -181,7 +168,7 @@ private object BrokerConnector extends Logging
 
   private def request(
     rawUri: String
-  ): WSRequest = {
+  ): StandaloneWSRequest = {
 
     val uri =
       if (rawUri startsWith "/") rawUri.substring(1)
@@ -194,9 +181,8 @@ private object BrokerConnector extends Logging
 
 
   // Set-up for periodic auto-update of config
-  import java.time.{Duration,LocalTime}
   import java.util.concurrent.Executors
-  import java.util.concurrent.TimeUnit.{SECONDS}
+  import java.util.concurrent.TimeUnit.SECONDS
   import java.util.concurrent.atomic.AtomicReference
 
   private lazy val executor =
@@ -204,9 +190,9 @@ private object BrokerConnector extends Logging
 
   private var failedTries = 0
   private val maxTries    = 5
-  private val retryPeriod = 30
+  private val retryPeriod = 30L
 
-  private def getSiteConfig: Unit = {
+  private def getSiteConfig(): Unit = {
 
     import ExecutionContext.Implicits.global
 
@@ -231,7 +217,7 @@ private object BrokerConnector extends Logging
           if (failedTries < maxTries){
             log.warn(s"Retrying broker connection in $retryPeriod seconds")
             executor.schedule(
-              new Runnable { override def run = getSiteConfig },
+              new Runnable { override def run = getSiteConfig() },
               retryPeriod,
               SECONDS
             )
@@ -249,13 +235,13 @@ private object BrokerConnector extends Logging
   LocalConfig.instance.updatePeriod match {
     case Some(period) =>
       executor.scheduleAtFixedRate(
-        () => getSiteConfig,
+        () => getSiteConfig(),
         0,
         period*60,
         SECONDS
       )
     case None =>
-      getSiteConfig
+      getSiteConfig()
   }
 
 
@@ -292,7 +278,7 @@ extends HttpConnector(requestMapper){
   override def request(
     site: Coding[Site],
     uri: String
-  ): WSRequest = 
+  ): StandaloneWSRequest = 
     BrokerConnector
       .request(uri)
       .withVirtualHost(
