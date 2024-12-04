@@ -12,6 +12,7 @@ import scala.util.{
   Failure,
   Using
 }
+import scala.util.chaining._
 import scala.xml.XML
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -223,14 +224,20 @@ private object BrokerConnector extends Logging
             )
           } else
             log.error(s"Permanent broker connection failure after $failedTries tries, ensure the overall networking configuration is correct")
-          
+
       }
 
   }
 
   private val sitesConfig: AtomicReference[Map[Coding[Site],String]] =
     new AtomicReference(Map.empty)
-
+/*
+    new AtomicReference(
+      Map(
+        Site.local -> s"${Site.local.code.value.toLowerCase}.dnpm.de"
+      )
+    )
+*/
 
   LocalConfig.instance.updatePeriod match {
     case Some(period) =>
@@ -262,19 +269,16 @@ private class BrokerConnector
 extends HttpConnector(requestMapper){
 
   override def otherSites: Set[Coding[Site]] =
-    BrokerConnector.sitesConfig.get match {
-      case map if (map.nonEmpty) =>
-        map.collect {
-          case (site,_) if (site.code != Site.local.code) => site
-        }
-        .toSet
+    BrokerConnector.sitesConfig.get
+      .collect { case (site,_) if site != Site.local => site }
+      .toSet
+      .tap {
+        set => 
+          if (set.isEmpty)
+            log.warn("Global site config from broker not available, falling back to empty external site list")
+      }
 
-      case _ =>
-        log.warn("Global site config from broker not available, falling back to empty external site list")
-        Set.empty[Coding[Site]]
-    }
-
-  
+/*
   override def request(
     site: Coding[Site],
     uri: String
@@ -284,5 +288,23 @@ extends HttpConnector(requestMapper){
       .withVirtualHost(
         BrokerConnector.sitesConfig.get()(site)
       )
+*/
+
+  override def request(
+    site: Coding[Site],
+    uri: String
+  ): StandaloneWSRequest =
+    BrokerConnector.sitesConfig.get.get(site) match {
+
+      case Some(vhost) =>
+        BrokerConnector.request(uri).withVirtualHost(vhost)
+
+      case _ =>
+        log.warn(
+          s"Virtual hostname of site '${site.code.value}' not available. Check broker availability for peer discovery."
+        )
+        BrokerConnector.request(uri)
+    }
+    
 
 }

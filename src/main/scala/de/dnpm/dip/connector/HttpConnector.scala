@@ -59,10 +59,7 @@ with Logging
     )
 
 
-
-//  private val successCodes = ClosedInterval(200 -> 299)
-  private val successCodes = 200 to 299
-
+//  private val successCodes = 200 to 299
 
   override def submit[T <: PeerToPeerRequest: Writes](
     req: T,
@@ -102,7 +99,7 @@ with Logging
             .execute(method.toString)
             .map( 
               resp =>
-                if (successCodes contains resp.status){
+                if (resp.status >= 200 & resp.status <= 299){
                   resp.body[JsValue]
                     .validate[req.ResultType]
                     .asEither
