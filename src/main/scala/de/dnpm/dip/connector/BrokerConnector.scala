@@ -8,8 +8,8 @@ import java.io.{
 import java.net.URI
 import scala.util.{
   Try,
+//  Failure,
   Success,
-  Failure,
   Using
 }
 import scala.util.chaining._
@@ -26,7 +26,10 @@ import play.api.libs.json.{
   JsValue,
   Reads
 }
-import de.dnpm.dip.util.Logging
+import de.dnpm.dip.util.{
+  Logging,
+  Retry
+}
 import de.dnpm.dip.coding.Coding
 import de.dnpm.dip.model.Site
 
@@ -182,74 +185,58 @@ private object BrokerConnector extends Logging
 
 
   // Set-up for periodic auto-update of config
-  import java.util.concurrent.Executors
+  import java.util.concurrent.{
+    Executors,
+    ScheduledExecutorService
+  }
   import java.util.concurrent.TimeUnit.SECONDS
   import java.util.concurrent.atomic.AtomicReference
+  import ExecutionContext.Implicits.global
 
-  private lazy val executor =
+
+  private implicit lazy val executor: ScheduledExecutorService =
     Executors.newSingleThreadScheduledExecutor
 
-  private var failedTries = 0
-  private val maxTries    = 5
-  private val retryPeriod = 30L
 
-  private def getSiteConfig(): Unit = {
-
-    import ExecutionContext.Implicits.global
-
-    log.info(s"Requesting peer connectivity config from broker")
-
-    request("/sites")
-      .get()
-      .map(_.body[JsValue].as[BrokerConnector.SiteConfig])
-      .onComplete {
-        case Success(config) =>
-          failedTries = 0
-          sitesConfig.set(
-            config.sites.map {
-              case BrokerConnector.SiteEntry(id,name,vhost) => Coding[Site](id,name) -> vhost
-            }
-            .toMap
-          )
-
-        case Failure(t) =>
-          log.error(s"Broker connection error: ${t.getMessage}")
-          failedTries += 1
-          if (failedTries < maxTries){
-            log.warn(s"Retrying broker connection in $retryPeriod seconds")
-            executor.schedule(
-              new Runnable { override def run = getSiteConfig() },
-              retryPeriod,
-              SECONDS
-            )
-          } else
-            log.error(s"Permanent broker connection failure after $failedTries tries, ensure the overall networking configuration is correct")
-
-      }
-
-  }
+  private val peerDiscoveryTask =
+    Retry(
+      () => {
+        log.info(s"Requesting peer connectivity config from broker")
+      
+        request("/sites")
+          .get()
+          .map(_.body[JsValue].as[BrokerConnector.SiteConfig])
+          .andThen {
+            case Success(config) =>
+              sitesConfig.set(
+                config.sites.map {
+                  case BrokerConnector.SiteEntry(id,name,vhost) => Coding[Site](id,name) -> vhost
+                }
+                .toMap
+              )
+          }
+      },
+      "Peer Discovery",
+      5,
+      15
+    )
 
   private val sitesConfig: AtomicReference[Map[Coding[Site],String]] =
     new AtomicReference(Map.empty)
-/*
-    new AtomicReference(
-      Map(
-        Site.local -> s"${Site.local.code.value.toLowerCase}.dnpm.de"
-      )
-    )
-*/
+
 
   LocalConfig.instance.updatePeriod match {
     case Some(period) =>
       executor.scheduleAtFixedRate(
-        () => getSiteConfig(),
+        peerDiscoveryTask,
         0,
         period*60,
         SECONDS
       )
     case None =>
-      getSiteConfig()
+      peerDiscoveryTask.run
   }
+
 
 
   def apply(
@@ -277,18 +264,6 @@ extends HttpConnector(requestMapper){
           if (set.isEmpty)
             log.warn("Global site config from broker not available, falling back to empty external site list")
       }
-
-/*
-  override def request(
-    site: Coding[Site],
-    uri: String
-  ): StandaloneWSRequest = 
-    BrokerConnector
-      .request(uri)
-      .withVirtualHost(
-        BrokerConnector.sitesConfig.get()(site)
-      )
-*/
 
   override def request(
     site: Coding[Site],
