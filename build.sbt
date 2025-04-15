@@ -3,7 +3,7 @@
 
 name := "connector-base"
 ThisBuild / organization := "de.dnpm.dip"
-ThisBuild / scalaVersion := "2.13.13"
+ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / version      := "1.0-SNAPSHOT"
 
 
