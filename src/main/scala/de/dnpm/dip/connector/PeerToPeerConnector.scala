@@ -11,12 +11,11 @@ import scala.util.{
 }
 import scala.xml._
 import scala.concurrent.duration._
-import akka.actor.ActorSystem
-import akka.stream.Materializer
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.Materializer
 import play.api.libs.ws.{
   StandaloneWSClient,
   StandaloneWSRequest,
-//  StandaloneWiSResponse
 }
 import play.api.libs.ws.ahc.StandaloneAhcWSClient
 import de.dnpm.dip.util.Logging

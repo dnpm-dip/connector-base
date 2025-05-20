@@ -8,7 +8,6 @@ import java.io.{
 import java.net.URI
 import scala.util.{
   Try,
-//  Failure,
   Success,
   Using
 }
@@ -16,8 +15,8 @@ import scala.util.chaining._
 import scala.xml.XML
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import akka.actor.ActorSystem
-import akka.stream.Materializer
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.Materializer
 import play.api.libs.ws.StandaloneWSRequest
 import play.api.libs.ws.ahc.StandaloneAhcWSClient
 import play.api.libs.ws.JsonBodyReadables._
