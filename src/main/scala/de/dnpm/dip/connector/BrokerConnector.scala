@@ -215,9 +215,9 @@ private object BrokerConnector extends Logging
               )
           }
       },
-      "Peer Discovery",
-      5,
-      15
+      name = "Peer Discovery",
+      maxTries = 5,
+      period = 15
     )
 
   private val sitesConfig: AtomicReference[Map[Coding[Site],String]] =

@@ -1,10 +1,14 @@
-
+import scala.util.Properties.envOrElse
 
 
 name := "connector-base"
 ThisBuild / organization := "de.dnpm.dip"
 ThisBuild / scalaVersion := "2.13.16"
-ThisBuild / version      := "1.0-SNAPSHOT"
+ThisBuild / version      := envOrElse("VERSION","1.0.0")
+
+val ownerRepo  = envOrElse("REPOSITORY","dnpm-dip/connector-base").split("/")
+ThisBuild / githubOwner      := ownerRepo(0)
+ThisBuild / githubRepository := ownerRepo(1)
 
 
 //-----------------------------------------------------------------------------
@@ -16,7 +20,7 @@ lazy val root = project.in(file("."))
   .settings(
     libraryDependencies ++= Seq(
     "org.scalatest"          %% "scalatest"               % "3.2.18" % Test,
-    "de.dnpm.dip"            %% "service-base"            % "1.0-SNAPSHOT",
+    "de.dnpm.dip"            %% "service-base"            % "1.0.0",
     "org.playframework"      %% "play-ahc-ws-standalone"  % "3.0.7",
     "org.playframework"      %% "play-ws-standalone-json" % "3.0.7",
     "org.scala-lang.modules" %% "scala-xml"               % "2.2.0",
@@ -74,16 +78,15 @@ lazy val compilerOptions = Seq(
   "-Wunused:privates",
   "-Wunused:implicits",
   "-Wvalue-discard",
-
-  // Deactivated to avoid many false positives from 'evidence' parameters in context bounds
-//  "-Wunused:params",
 )
 
 
 lazy val commonSettings = Seq(
   scalacOptions ++= compilerOptions,
-  resolvers ++=
-    Seq("Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository") ++
-    Resolver.sonatypeOssRepos("releases") ++
-    Resolver.sonatypeOssRepos("snapshots")
+  resolvers ++= Seq(
+    "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository",
+    Resolver.githubPackages("dnpm-dip"),
+    Resolver.githubPackages("KohlbacherLab"),
+    Resolver.sonatypeCentralSnapshots
+  )
 )
