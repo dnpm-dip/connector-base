@@ -4,7 +4,7 @@ import scala.util.Properties.envOrElse
 name := "connector-base"
 ThisBuild / organization := "de.dnpm.dip"
 ThisBuild / scalaVersion := "2.13.16"
-ThisBuild / version      := envOrElse("VERSION","1.0.0")
+ThisBuild / version      := envOrElse("VERSION","1.1.0")
 
 val ownerRepo  = envOrElse("REPOSITORY","dnpm-dip/connector-base").split("/")
 ThisBuild / githubOwner      := ownerRepo(0)
@@ -20,7 +20,7 @@ lazy val root = project.in(file("."))
   .settings(
     libraryDependencies ++= Seq(
     "org.scalatest"          %% "scalatest"               % "3.2.18" % Test,
-    "de.dnpm.dip"            %% "service-base"            % "1.0.0",
+    "de.dnpm.dip"            %% "service-base"            % "1.1.0",
     "org.playframework"      %% "play-ahc-ws-standalone"  % "3.0.7",
     "org.playframework"      %% "play-ws-standalone-json" % "3.0.7",
     "org.scala-lang.modules" %% "scala-xml"               % "2.2.0",
