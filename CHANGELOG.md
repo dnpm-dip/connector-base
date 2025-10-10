@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/dnpm-dip/connector-base/compare/v1.0.0...v1.1.0) (2025-10-10)
+
+
+### Features
+
+* Upgraded dependency version: service-base ([c5a92fd](https://github.com/dnpm-dip/connector-base/commit/c5a92fd0dd0c8216b7fd3ea5d8f3b0374dd5cbd9))
+
 ## 1.0.0 (2025-08-06)
 
 
