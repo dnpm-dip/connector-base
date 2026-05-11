@@ -34,7 +34,7 @@ object TestRequest
 class Tests extends AsyncFlatSpec
 {
 
-  System.setProperty(Site.property,"UKx:Musterlingen")
+  System.setProperty(Site.PROP,"UKx:Musterlingen")
 
 
   private val brokerConnector =
