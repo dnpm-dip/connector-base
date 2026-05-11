@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/dnpm-dip/connector-base/compare/v1.1.1...v1.1.2) (2026-05-11)
+
+
+### Bug Fixes
+
+* Bump service-base to 1.3.0 ([e529f99](https://github.com/dnpm-dip/connector-base/commit/e529f9952a1f2ccb937a7ab3e75bdec7b175eaf1))
+
 ## [1.1.1](https://github.com/dnpm-dip/connector-base/compare/v1.1.0...v1.1.1) (2025-11-19)
 
 
