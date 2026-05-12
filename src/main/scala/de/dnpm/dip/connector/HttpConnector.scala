@@ -104,19 +104,17 @@ with Logging
                     .validate[req.ResultType]
                     .asEither
                     .leftMap(
-                      errs =>
-                        "Invalid JSON response payload"
-                          .tap(msg => log error s"$msg:\n${errs.mkString("\n")}")
+                      errs => "Invalid JSON response payload".tap(msg => log error s"$msg:\n${errs.mkString("\n")}")
                     )
                 } else {
                   s"${resp.status} ${resp.statusText}"
-                    .tap(msg => log error s"In peer-to-peer response from site ${site.display.get}: $msg")
+                    .tap(msg => log error s"In peer-to-peer response from site ${site.display.getOrElse(site.code)}: $msg")
                     .asLeft
                 }
             )
             .recover {
               case t =>
-                s"In peer-to-peer request to site ${site.display.get}: ${t.getMessage}"
+                s"In peer-to-peer request to site ${site.display.getOrElse(site.code.value)}: ${t.getMessage}"
                   .tap(log.error)
                   .asLeft[req.ResultType]
             }
