@@ -132,13 +132,13 @@ object HttpConnector
 
   object Type extends Enumeration
   {
-    val PeerToPeer = Value("peer2peer")
     val Broker     = Value("broker")
+    val PeerToPeer = Value("peer2peer")
     
     val property = "dnpm.dip.connector.type"
     
     def unapply(s: String): Option[Value] =
-      values.find(_.toString.toLowerCase == s.toLowerCase)
+      values.find(_.toString == s.toLowerCase)
   }
 
   trait Config
@@ -147,11 +147,32 @@ object HttpConnector
   }
 
 
+  type QueryParameters = Map[String,Seq[String]]
+
+  object QueryParameters
+  {
+
+    implicit def fromSimpleMap(params: Map[String,String]): QueryParameters =
+      params.map { case (key,value) => key -> Seq(value) }
+
+    def apply(params: (String,String)*): QueryParameters =
+      params.toMap
+
+
+    implicit class ExtensionOps(val params: QueryParameters) extends AnyVal {
+
+      def +(param: (String,Option[String])): QueryParameters =
+        params ++ param._2.map(param._1 -> Seq(_))
+
+    }
+  }
+
+
   // Convert a Request into triple of HTTP Method, URI and Query Parameters
   type RequestMapper =
     PartialFunction[
       PeerToPeerRequest,
-      (HttpMethod.Value,String,Map[String,Seq[String]])
+      (HttpMethod.Value,String,QueryParameters)
     ] 
 
 
@@ -160,11 +181,16 @@ object HttpConnector
     requestMapper: HttpConnector.RequestMapper
   ): HttpConnector =
     typ match {
-
       case Type.Broker     => BrokerConnector(requestMapper)
-
       case Type.PeerToPeer => PeerToPeerConnector(requestMapper)
-
     }
+
+  def apply(
+    requestMapper: HttpConnector.RequestMapper
+  ): HttpConnector =
+    apply(
+      sys.props.get(Type.property).collect { case Type(t) => t }.getOrElse(Type.Broker),
+      requestMapper
+    )
 
 }
