@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/dnpm-dip/connector-base/compare/v1.1.3...v1.2.0) (2026-06-01)
+
+
+### Features
+
+* Added builder method for HttpConnnector and convenience methods for working with query parameters ([#6](https://github.com/dnpm-dip/connector-base/issues/6)) ([9bb6ff9](https://github.com/dnpm-dip/connector-base/commit/9bb6ff9d9b0cc363e4694f226683975d7d5e83c0))
+* httpconnector build improvement ([#8](https://github.com/dnpm-dip/connector-base/issues/8)) ([0c87958](https://github.com/dnpm-dip/connector-base/commit/0c87958f4a41f8120d1c5a28bb68ddbca38a4b01))
+
 ## [1.1.3](https://github.com/dnpm-dip/connector-base/compare/v1.1.2...v1.1.3) (2026-05-12)
 
 
