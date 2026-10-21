@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/dnpm-dip/connector-base/compare/v1.2.1...v1.2.2) (2026-10-21)
+
+
+### Bug Fixes
+
+* bump dependencies ([7bf1990](https://github.com/dnpm-dip/connector-base/commit/7bf199022808b1a7e6397b05a69b2d36c21e8f57))
+
 ## [1.2.1](https://github.com/dnpm-dip/connector-base/compare/v1.2.0...v1.2.1) (2026-08-12)
 
 
